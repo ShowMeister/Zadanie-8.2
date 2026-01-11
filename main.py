@@ -1,45 +1,36 @@
 import pandas as pd
+import requests
+from bs4 import BeautifulSoup
 
-data = {
-    'TITLE': ['GREATEST HITS', 'GOLD - GREATEST HITS', "SGT PEPPER'S LONELY HEARTS CLUB BAND", '21', 
-              "WHAT'S THE STORY MORNING GLORY", 'THRILLER', 'THE DARK SIDE OF THE MOON', 'BROTHERS IN ARMS',
-              'BAD', 'GREATEST HITS II', 'RUMOURS', 'THE IMMACULATE COLLECTION', 'BACK TO BLACK', 'STARS',
-              'COME ON OVER', 'LEGEND', 'BACK TO BEDLAM', 'URBAN HYMNS', 'BAT OUT OF HELL', '1',
-              'BRIDGE OVER TROUBLED WATER', 'DIRTY DANCING', 'SPIRIT', 'CRAZY LOVE', 'NO ANGEL',
-              'WHITE LADDER', '25', 'TALK ON CORNERS', 'SPICE', 'THE FAME', 'A RUSH OF BLOOD TO THE HEAD',
-              'LIFE FOR RENT', 'ONLY BY THE NIGHT', 'BEAUTIFUL WORLD', 'HOPES AND FEARS', 'THE JOSHUA TREE',
-              'THE WAR OF THE WORLDS', 'SCISSOR SISTERS', 'BUT SERIOUSLY', 'X&Y', 'JAGGED LITTLE PILL',
-              'TUBULAR BELLS', 'THE MAN WHO', 'TRACY CHAPMAN', 'PARACHUTES', 'GREATEST HITS',
-              'GREASE', "I'VE BEEN EXPECTING YOU", 'X', 'COME AWAY WITH ME', 'GRACELAND',
-              'THE SOUND OF MUSIC', 'LADIES & GENTLEMEN - THE BEST OF', 'TANGO IN THE NIGHT',
-              'THE MARSHALL MATHERS LP', 'SWING WHEN YOU\'RE WINNING', 'PROGRESS', 'EYES OPEN',
-              'NEVER FORGET - THE ULTIMATE COLLECTION', 'AUTOMATIC FOR THE PEOPLE'],
-    'ARTIST': ['QUEEN', 'ABBA', 'BEATLES', 'ADELE', 'OASIS', 'MICHAEL JACKSON', 'PINK FLOYD', 'DIRE STRAITS',
-               'MICHAEL JACKSON', 'QUEEN', 'FLEETWOOD MAC', 'MADONNA', 'AMY WINEHOUSE', 'SIMPLY RED',
-               'SHANIA TWAIN', 'BOB MARLEY & THE WAILERS', 'JAMES BLUNT', 'VERVE', 'MEAT LOAF', 'BEATLES',
-               'SIMON & GARFUNKEL', 'ORIGINAL SOUNDTRACK', 'LEONA LEWIS', 'MICHAEL BUBLE', 'DIDO',
-               'DAVID GRAY', 'ADELE', 'CORRS', 'SPICE GIRLS', 'LADY GAGA', 'COLDPLAY',
-               'DIDO', 'KINGS OF LEON', 'TAKE THAT', 'KEANE', 'U2', 'JEFF WAYNE', 'SCISSOR SISTERS',
-               'PHIL COLLINS', 'COLDPLAY', 'ALANIS MORISSETTE', 'MIKE OLDFIELD', 'TRAVIS', 'TRACY CHAPMAN',
-               'COLDPLAY', 'ABBA', 'ORIGINAL SOUNDTRACK', 'ROBBIE WILLIAMS', 'ED SHEERAN', 'NORAH JONES',
-               'PAUL SIMON', 'ORIGINAL CAST RECORDING', 'GEORGE MICHAEL', 'FLEETWOOD MAC', 'EMINEM',
-               'ROBBIE WILLIAMS', 'TAKE THAT', 'SNOW PATROL', 'TAKE THAT', 'REM'],
-    'YEAR': [1981, 1992, 1967, 2011, 1995, 1982, 1973, 1985, 1987, 1991, 1977, 1990, 2006, 1991,
-             1997, 1984, 2004, 1997, 1977, 2000, 1970, 1987, 2007, 2009, 2000, 1998, 2015, 1997,
-             1996, 2008, 2002, 2003, 2008, 2006, 2004, 1987, 1978, 2004, 1989, 2005, 1995, 1973,
-             1999, 1988, 2000, 1975, 1977, 1998, 2014, 2002, 1986, 1965, 1998, 1987, 2000, 2001,
-             2010, 2006, 2005, 1992],
-    'HIGH_POSN': [1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 1,
-                  1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 1, 1, 1,
-                  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1]
-}
+url = 'https://www.officialcharts.com/chart-news/the-best-selling-albums-of-all-time-on-the-official-uk-chart__15551/'
+response = requests.get(url)
+soup = BeautifulSoup(response.content, 'html.parser')
+
+table = soup.find('table')
+rows = table.find_all('tr')
+
+data = []
+for row in rows[1:]:  
+    cols = row.find_all('td')
+    if len(cols) == 5:
+        data.append({
+            'POS': cols[0].text.strip(),
+            'TITLE': cols[1].text.strip(),
+            'ARTIST': cols[2].text.strip(),
+            'YEAR': int(cols[3].text.strip()),
+            'HIGH POSN': int(cols[4].text.strip())
+        })
 
 df = pd.DataFrame(data)
 
-# Zamień nagłówki na polskie
-df.columns = ['TYTUŁ', 'ARTYSTA', 'ROK', 'MAX POZ']
+print("Dane wczytane ze strony:")
+print(df.head())
 
-print("1. Ilu pojedynczych artystów znajduje się na liście?")
+df.columns = ['TYTUŁ', 'ARTYSTA', 'ROK', 'MAX POZ']
+# Usuń kolumnę POS (pozycja na liście)
+df = df[['TYTUŁ', 'ARTYSTA', 'ROK', 'MAX POZ']]
+
+print("\n1. Ilu pojedynczych artystów znajduje się na liście?")
 unique_artists = df['ARTYSTA'].nunique()
 print(f"Liczba unikalnych artystów: {unique_artists}\n")
 
